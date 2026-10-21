@@ -1,0 +1,32 @@
+version: "3"
+
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  build:
+    desc: Build runns CLI (release)
+    sources:
+      - src/**/*.rs
+      - Cargo.toml
+    cmds:
+      - cargo build --release --bin runns
+
+  test:
+    cmds:
+      - cargo test
+
+  install:
+    desc: Install runns to /usr/local/bin with cap_sys_admin (sudo)
+    preconditions:
+      - sh: test "$(id -u)" -eq 0
+        msg: "Run as root, e.g. sudo task install"
+      - sh: test -x target/release/runns
+        msg: "Missing target/release/runns — run task build first"
+      - sh: command -v setcap >/dev/null
+        msg: "setcap not found (install libcap2-bin)"
+    cmds:
+      - install -m 755 target/release/runns /usr/local/bin/runns
+      - setcap cap_sys_admin+ep /usr/local/bin/runns
+      - setcap -v cap_sys_admin+ep /usr/local/bin/runns
